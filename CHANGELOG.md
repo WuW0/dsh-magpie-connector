@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **把 Magpie 的路由组从具体 provider 分组里分出来，模型选择器不再出现同名重复条目。** 网关对「同一模型被多个 provider 提供」的自动路由组会同时返回两条数据：路由组别名（id 形如 `auto/<slug>`、`group/<slug>`）与具体 provider 模型（`<provider>/<slug>`），两者的 `display_name` 相同，而插件原来只按 `owned_by` 归组，选择器里就看不出区别。现在 `mapCatalog` 用一个单独的判断（id 前缀 `auto/`、`group/`，或 `magpie_label` 含 `routing group`）把路由组条目归到保留归属 `routing`，于是它们单独成为 `Magpie (Routing)` 分组，与 provider 分组互不重复。可见性键仍然是原始的 `owned_by`（设置页的分组、已保存的可见性选择都不变），请求照旧按网关 id 透传，`knownOwners` 自动登记新归属。新增 `test/routing-group-owner.test.ts` 覆盖映射、真实 Host 分组与 id 透传。
+
 ## 0.6.12 — 2026-11-11
 
 - **修复模型请求绕过宿主全局 fetch 上下文处理的问题（prgrmrwy/dsh-magpie-connector#7）。** `POST /responses` 和 `POST /chat/completions` 在发送时读取全局 `fetch`，使 billion-context 等宿主中间件能够处理模型请求；目录、额度与重置等管理请求仍直接调用 undici。保留专用 dispatcher、连接超时、认证与归属 headers、禁止重定向、取消信号和错误分类。

@@ -86,7 +86,7 @@ Once the reset POST has started, transport failures or unreadable outcomes retai
 interface CatalogModel {
   info: LlmResolvedModelInfo
   provider: string // visibility key: owned_by, else first id segment
-  owner: string // route key (ownerKey), route = dsh-magpie-connector-<owner>
+  owner: string // route key: ownerKey(owned_by), or ROUTING_OWNER ('routing') for a routing group (auto/*, group/*, or a `routing group` label); route = dsh-magpie-connector-<owner>
   efforts: string[]
   nativeEndpoints: string[]
   serviceTiers: string[] // tier ids, e.g. priority

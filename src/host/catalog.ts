@@ -10,6 +10,16 @@ export function ownerKey(ownedBy: unknown): string {
   const key = ownedBy.trim().toLowerCase()
   return key.length >= 1 && key.length <= 48 && OWNER_KEY.test(key) ? key : 'other'
 }
+/**
+ * Owner key for gateway routing groups. Magpie serves a routing group (`auto/*`, and a
+ * user-defined `group/*`) as an entry of the provider that happens to own it, so its
+ * `display_name` duplicates that provider's own model of the same name. Routing groups get a
+ * route of their own instead: the id is still forwarded verbatim, only the picker section changes.
+ */
+export const ROUTING_OWNER = 'routing'
+/** A gateway entry that is a routing-group alias, not one provider's model. */
+export const isRoutingGroup = (raw: { id: string; magpie_label?: unknown }): boolean =>
+  raw.id.startsWith('auto/') || raw.id.startsWith('group/') || /routing group/i.test(typeof raw.magpie_label === 'string' ? raw.magpie_label : '')
 /** Display name depends on the owner key alone, never on catalog content. */
 export const ownerLabel = (key: string): string => key === 'other' ? 'Magpie (Other)' : `Magpie (${key.charAt(0).toUpperCase()}${key.slice(1)})`
 export const routeOf = (key: string): string => `${ROUTE_PREFIX}${key}`
@@ -43,7 +53,7 @@ export function mapCatalog(body: unknown): CatalogModel[] {
       ...(outputLimit !== undefined ? { defaultMaxTokens: defaultOutputBudget(contextWindow, outputLimit) } : {}),
       ...(efforts.length ? { reasoning: { efforts: efforts.map(id => ({ id: id as never, name: id })) } } : {}),
     }
-    return [{ info, provider: ownedBy ?? raw.id.split('/')[0], owner: ownerKey(raw.owned_by), efforts, ...(outputLimit !== undefined ? { outputLimit } : {}),
+    return [{ info, provider: ownedBy ?? raw.id.split('/')[0], owner: isRoutingGroup(raw) ? ROUTING_OWNER : ownerKey(raw.owned_by), efforts, ...(outputLimit !== undefined ? { outputLimit } : {}),
       nativeEndpoints: strings(raw.native_endpoints), serviceTiers: Array.isArray(raw.service_tiers) ? raw.service_tiers.flatMap((t: { id?: unknown }) => typeof t?.id === 'string' ? [t.id] : []) : [] }]
   })
 }
